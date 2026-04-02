@@ -1,0 +1,21 @@
+{% load static %}
+<header class="sticky top-0 z-10 bg-white border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <img src="{% static 'polytech-logo.jpg' %}" alt="Logo" class="w-auto h-12 rounded-xl object-contain">
+            <div class="font-semibold text-lg" id="app-title">TA Evaluation System</div>
+        </div>
+
+        <!-- Role Switcher (admin only) -->
+        {% if user_role == 'admin' %}
+        <div class="flex gap-2 p-1 bg-gray-100 rounded-lg" id="role-switcher">
+            <button class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors role-btn"
+                data-role="admin" id="btn-role-admin">Administrative</button>
+            <button class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors role-btn"
+                data-role="faculty" id="btn-role-faculty">Faculty</button>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'logout' %}" class="btn btn-sm btn-error text-white">Logout</a>
+    </div>
+</header>

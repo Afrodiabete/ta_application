@@ -1,15 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Login - {{ INST_SHORT_NAME }} PeerEval{% endblock %}
+{% load static %}
+{% block title %}Login - {{ INST_SHORT_NAME }} TAEval{% endblock %}
 
 {% block content %}
 <div class="h-full flex-1 flex items-center justify-center">
   <div class="flex items-center justify-center min-h-full">
     <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-96 border p-4">
+      <div class="flex justify-center mb-4">
+        <img src="{% static 'polytech-logo.jpg' %}" alt="Polytech Logo" class="w-32 h-auto">
+      </div>
       <h1 class="text-2xl font-bold mb-4 text-center">System Login</h1>
       <form method="POST" action="{% url 'login' %}">
         {% csrf_token %}
-        <label class="label">Username</label>
-        <input type="text" class="input w-full mb-2" placeholder="Username" name="username" id="username" />
+        <label class="label">Email</label>
+        <input type="email" class="input w-full mb-2" placeholder="Email" name="email" id="email" />
 
         <label class="label">Password</label>
         <input type="password" class="input w-full mb-2" placeholder="Password" name="password" id="password" />
@@ -17,7 +21,8 @@
         <button type="submit" class="btn btn-primary mt-4 w-full">Login</button>
       </form>
       <div class="mt-4 text-center">
-        <a href="{% url 'password_reset_request' %}" class="link">Forgot Password?</a>
+        <a href="{% url 'password_reset_request' %}" class="link block mb-2">Forgot Password?</a>
+        <a href="{% url 'register' %}" class="link block">Don't have an account? Register</a>
       </div>
     </fieldset>
   </div>

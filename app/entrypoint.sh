@@ -31,18 +31,22 @@ backup_sensitive_files
 
 # Function to update from GitHub
 update_from_github() {
-    echo "Updating from GitHub..."
-    cd /app
-    git fetch origin
-    if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-        echo "Changes detected, updating..."
-        git reset --hard origin/main
-        restore_sensitive_files
-        python manage.py collectstatic --noinput
-        python manage.py migrate
-        echo "Update completed"
+    if [ "$AUTO_UPDATE" = "true" ]; then
+        echo "Updating from GitHub..."
+        cd /app
+        git fetch origin
+        if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "Changes detected, updating..."
+            git reset --hard origin/main
+            restore_sensitive_files
+            python manage.py collectstatic --noinput
+            python manage.py migrate
+            echo "Update completed"
+        else
+            echo "No changes detected"
+        fi
     else
-        echo "No changes detected"
+        echo "Auto-update is disabled. Skipping GitHub pull to protect local modifications."
     fi
 }
 

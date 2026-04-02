@@ -142,7 +142,7 @@ def get_flags(student_id, assignment_id):
                         flags.append({
                             'type': 'warning',
                             'label': 'Conflict',
-                            'instructor_msg': f'Potential conflict between student and {eval.evaluator_id.username}',
+                            'instructor_msg': f'Potential conflict between student and {eval.evaluator_id.email}',
                         })
                         break
     return flags

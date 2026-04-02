@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}TA Eval System - {{ INST_SHORT_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-10">
+
+    {% include "dashboard/_header.html" %}
+
+    <main class="max-w-6xl mx-auto px-4 py-8 space-y-8" id="main-container">
+        <!-- Views injected by JS -->
+    </main>
+
+    {% include "dashboard/_footer.html" %}
+
+</div>
+
+<!-- ==========================================
+     Django Data Injection
+     Exposed as window globals for static JS files.
+     ========================================== -->
+<script>
+    window.USER_ROLE            = '{{ user_role }}';
+    window.COURSES              = JSON.parse('{{ courses_json|escapejs|default:"[]" }}');
+    window.COURSE_SKILLS        = JSON.parse('{{ skills_json|escapejs|default:"{}" }}');
+    window.APPLICANTS           = JSON.parse('{{ applicants_json|escapejs|default:"[]" }}');
+    window.CURRENT_STUDENT      = JSON.parse('{{ current_student_json|escapejs|default:"{}" }}');
+    window.APPLIED_COURSES      = JSON.parse('{{ applied_courses_json|escapejs|default:"[]" }}');
+    window.PREVIOUS_APPLICATIONS = JSON.parse('{{ previous_applications_json|escapejs|default:"{}" }}');
+</script>
+
+<!-- ==========================================
+     Controllers (order matters)
+     ========================================== -->
+<script src="{% static 'js/utils.js' %}"></script>
+<script src="{% static 'js/admin_controller.js' %}"></script>
+<script src="{% static 'js/faculty_controller.js' %}"></script>
+<script src="{% static 'js/student_controller.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+
+{% endblock %}

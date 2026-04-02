@@ -1,17 +1,58 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.base_user import BaseUserManager
 from django.utils import timezone
+
+class CustomUserManager(BaseUserManager):
+    """
+    Custom user model manager where email is the unique identifiers
+    for authentication instead of usernames.
+    """
+    def create_user(self, email, password, **extra_fields):
+        """
+        Create and save a User with the given email and password.
+        """
+        if not email:
+            raise ValueError('The Email must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        """
+        Create and save a SuperUser with the given email and password.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+        return self.create_user(email, password, **extra_fields)
 
 class Users(AbstractUser):
     is_instructor = models.BooleanField(default=False, help_text='Whether the user is an instructor.')
+    
+    # Remove username field and use email as username
+    username = None
+    email = models.EmailField(unique=True, verbose_name='email address')
+    
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
 
     class Meta:
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.username})"
+        return f"{self.first_name} {self.last_name} ({self.email})"
 
 class Terms(models.Model):
     id = models.AutoField(primary_key=True)
@@ -272,3 +313,124 @@ class MeritScores(models.Model):
 
     def __str__(self):
         return f"{self.evaluation_id.evaluator_id.first_name} {self.evaluation_id.evaluator_id.last_name} scored {self.score_workcontribution} for {self.evaluation_id.evaluatee_id.first_name} {self.evaluation_id.evaluatee_id.last_name} in {self.evaluation_id.assignment_id.name}"
+
+# ==========================================
+# NEW SCHEMA MAPPING TO EXISTING TABLES
+# ==========================================
+
+class KnowledgeCategory(models.Model):
+    categoryName = models.CharField(max_length=100, db_column='categoryname')
+    class Level(models.IntegerChoices):
+        LOW = 1, 'Low'
+        MEDIUM = 2, 'Medium'
+        HIGH = 3, 'High'
+    knowledgeLevel = models.IntegerField(choices=Level.choices, db_column='knowledgelevel')
+
+    class Meta:
+        db_table = 'knowledgecategory'
+        verbose_name = 'Knowledge Category'
+        verbose_name_plural = 'Knowledge Categories'
+
+    def __str__(self):
+        return self.categoryName
+
+class Instructor(models.Model):
+    email = models.CharField(max_length=25, primary_key=True) 
+    firstName = models.CharField(max_length=45, db_column='firstname')
+    lastName = models.CharField(max_length=45, db_column='lastname')
+
+    class Meta:
+        db_table = 'instructor'
+
+    def __str__(self):
+        return self.email
+
+class Student(models.Model):
+    class Degree(models.TextChoices):
+        MS = 'MS', 'Master of Science'
+        PHD = 'PhD', 'Doctor of Philosophy'
+
+    class Campus(models.TextChoices):
+        INDY = 'Indy', 'Indianapolis'
+        WL = 'WL', 'West Lafayette'
+    
+    email = models.CharField(max_length=25, primary_key=True)
+    firstName = models.CharField(max_length=45, db_column='firstname')
+    lastName = models.CharField(max_length=45, db_column='lastname')
+    department = models.CharField(max_length=20)
+    degree = models.CharField(max_length=3, choices=Degree.choices)
+    resume = models.BinaryField()
+    teachingExperienceBool = models.CharField(max_length=45, db_column='teachingexperiencebool')
+    teachingExperienceText = models.CharField(max_length=250, db_column='teachingexperiencetext')
+    campus = models.CharField(max_length=5, choices=Campus.choices)
+
+    class Meta:
+        db_table = 'student'
+
+    def __str__(self):
+        return self.email
+
+class Course(models.Model):
+    idcourse = models.CharField(max_length=15, primary_key=True)
+    title = models.CharField(max_length=45)
+    description = models.CharField(max_length=150)
+
+    class Meta:
+        db_table = 'course'
+
+    def __str__(self):
+        return self.idcourse
+
+class CourseInstructorYear(models.Model):
+    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    year = models.CharField(max_length=15)
+
+    class Meta:
+        db_table = 'courseinstructoryear'
+        verbose_name = 'Course Instructor Year'
+        verbose_name_plural = 'Course Instructor Years'
+
+class CourseMustKnow(models.Model):
+    courseID = models.ForeignKey(Course, on_delete=models.CASCADE, db_column='courseid', primary_key=True)
+    categoryID = models.ForeignKey(KnowledgeCategory, on_delete=models.CASCADE, db_column='categoryid')
+
+    class Meta:
+        db_table = 'coursemustknow'
+        verbose_name = 'Course Must Know'
+        verbose_name_plural = 'Course Must Knows'
+
+class CourseStudentYearKnowledge(models.Model):
+    class KnowledgeLevel(models.IntegerChoices):
+        LOW = 1, 'Low'
+        MEDIUM = 2, 'Medium'
+        HIGH = 3, 'High'
+    
+    class CourseTaken(models.TextChoices):
+        YES = 'Yes', 'Yes'
+        NO = 'No', 'No'
+
+    class Recommendation(models.TextChoices):
+        STRONGLY_RECOMMEND = 'Strongly Recommend', 'Strongly Recommend'
+        RECOMMEND = 'Recommend', 'Recommend'
+        NEUTRAL = 'Neutral', 'Neutral'
+        DO_NOT_RECOMMEND = 'Do Not Recommend', 'Do Not Recommend'
+
+    courseID = models.ForeignKey(Course, on_delete=models.CASCADE, db_column='courseid')
+    studentID = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='studentid')
+    year = models.CharField(max_length=15)
+    catID = models.ForeignKey(KnowledgeCategory, on_delete=models.CASCADE, db_column='catid')
+    level = models.IntegerField(choices=KnowledgeLevel.choices)
+    courseTaken = models.CharField(max_length=3, choices=CourseTaken.choices, db_column='coursetaken')
+    knowledgeLevel = models.IntegerField(choices=KnowledgeLevel.choices, db_column='knowledgelevel')
+    courseKnowledge = models.TextField(blank=True, default='', db_column='courseknowledge')
+    overallRecommendation = models.CharField(max_length=20, choices=Recommendation.choices, blank=True, null=True, db_column='overallrecommendation')
+    comments = models.CharField(max_length=250, blank=True, null=True, db_column='comments')
+
+
+    class Meta:
+        db_table = 'coursestudentyearknowledge'
+        verbose_name = 'Course Student Year Knowledge'
+        verbose_name_plural = 'Course Student Year Knowledges'
+        unique_together = ('studentID', 'courseID', 'year', 'catID')
+

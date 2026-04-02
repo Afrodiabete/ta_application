@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Register - {{ INST_SHORT_NAME }} TAEval{% endblock %}
+
+{% block content %}
+<div class="h-full flex-1 flex items-center justify-center">
+    <div class="flex items-center justify-center min-h-full">
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-96 border p-4">
+            <div class="flex justify-center mb-4">
+                <img src="{% static 'polytech-logo.jpg' %}" alt="Polytech Logo" class="w-32 h-auto">
+            </div>
+            <h1 class="text-2xl font-bold mb-4 text-center">Create Account</h1>
+            <form method="POST" action="{% url 'register' %}">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="label">First Name</label>
+                        <input type="text" class="input w-full mb-2" placeholder="First" name="first_name" required />
+                    </div>
+                    <div>
+                        <label class="label">Last Name</label>
+                        <input type="text" class="input w-full mb-2" placeholder="Last" name="last_name" required />
+                    </div>
+                </div>
+
+                <label class="label">Email</label>
+                <input type="email" class="input w-full mb-2" placeholder="Email" name="email" required />
+
+                <label class="label">Password</label>
+                <input type="password" class="input w-full mb-2" placeholder="Password" name="password" required />
+
+                <label class="label">Confirm Password</label>
+                <input type="password" class="input w-full mb-2" placeholder="Confirm Password" name="confirm_password"
+                    required />
+
+                <button type="submit" class="btn btn-primary mt-4 w-full">Register</button>
+            </form>
+            <div class="mt-4 text-center">
+                <a href="{% url 'login' %}" class="link">Already have an account? Login</a>
+            </div>
+        </fieldset>
+    </div>
+</div>
+{% endblock %}

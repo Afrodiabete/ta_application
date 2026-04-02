@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full" data-theme="business">
+<html lang="en" class="h-full" data-theme="corporate">
 
 <head>
 	<title>{% block title %}{% endblock %}</title>
@@ -7,47 +7,27 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	{% load static %}
-    <link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css" />
+	<!-- Tailwind and DaisyUI CDN -->
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 	<script>
-		const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'business' : 'corporate');
+		tailwind.config = {
+			theme: {
+				extend: {},
+			},
+			daisyui: {
+				themes: ["light", "dark", "cupcake", "bumblebee", "emerald", "corporate", "synthwave", "retro", "cyberpunk", "valentine", "halloween", "garden", "forest", "aqua", "lofi", "pastel", "fantasy", "wireframe", "black", "luxury", "dracula", "cmyk", "autumn", "business", "acid", "lemonade", "night", "coffee", "winter"],
+			},
+		}
+		const theme = 'corporate';
 		document.documentElement.setAttribute('data-theme', theme);
+		localStorage.setItem('theme', theme);
 	</script>
 </head>
 
 <body class="min-h-screen bg-base-100 text-base-content flex flex-col">
-	<header class="navbar bg-base-300 shadow-sm">
-		<div class="flex-1">
-			<a href="{% url 'index' %}" class="btn btn-ghost text-xl">
-				{{ INST_NAME }} Peer Evaluation System
-			</a>
-		</div>
-		<div class="flex-none gap-2">
-			<label class="swap swap-rotate btn btn-square btn-ghost">
-				<input type="checkbox" id="theme-toggle" onchange="
-					const theme = this.checked ? 'corporate' : 'business';
-					document.documentElement.setAttribute('data-theme', theme);
-					localStorage.setItem('theme', theme);
-				"/>
-				<i class="fas fa-sun text-xl swap-on"></i>
-				<i class="fas fa-moon text-xl swap-off"></i>
-			</label>
-			{% if user.is_authenticated %}
-				{% if user.is_staff and user.is_superuser %}
-				<a href="{% url 'admin:index' %}" class="btn btn-square btn-ghost">
-					<i class="fas fa-cogs text-xl"></i>
-				</a>
-				{% endif %}
-				<form method="post" action="{% url 'logout' %}" class="inline">
-					{% csrf_token %}
-					<button type="submit" class="btn btn-square btn-ghost">
-						<i class="fas fa-sign-out-alt text-xl"></i>
-					</button>
-				</form>
-			{% endif %}
-		</div>
-	</header>
 
 	<main class="container mx-auto p-4 flex-grow">
 		{% block content %}{% endblock %}
@@ -55,10 +35,11 @@
 
 	<footer class="footer sm:footer-horizontal footer-center bg-base-300 text-base-content p-4 mt-auto">
 		<aside>
-			<p>&copy; 2025 {{ INST_NAME }}. All rights reserved.</p>
+			<p>&copy; 2026 {{ INST_NAME }}. All rights reserved.</p>
 			<p>Misuse of this system is prohibited and will result in disciplinary action.</p>
 			<p class="opacity-0 hover:opacity-100 transition-opacity delay-500 duration-1000 cursor-default">
-				Made by <a href="https://github.com/ItzPabz" target="_blank" rel="noopener noreferrer" class="link link-hover">Pablo</a>
+				Made by <a href="https://github.com/ItzPabz" target="_blank" rel="noopener noreferrer"
+					class="link link-hover">Pablo</a>
 			</p>
 		</aside>
 	</footer>
@@ -66,13 +47,14 @@
 	{% if messages %}
 	<div class="toast toast-top toast-center">
 		{% for message in messages %}
-		<div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'info' %}alert-info{% endif %}">
+		<div
+			class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'info' %}alert-info{% endif %}">
 			<span>{{ message }}</span>
 		</div>
 		{% endfor %}
 	</div>
 	<script>
-		document.addEventListener('DOMContentLoaded', function() {
+		document.addEventListener('DOMContentLoaded', function () {
 			const messages = document.querySelectorAll('.alert');
 			messages.forEach(message => {
 				setTimeout(() => {
@@ -90,21 +72,25 @@
 		const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
 
 		function updateIcons() {
+			if (!themeToggleDarkIcon || !themeToggleLightIcon) return;
 			const isDark = document.documentElement.getAttribute('data-theme') === 'business';
 			themeToggleDarkIcon.style.display = isDark ? 'none' : 'inline-block';
 			themeToggleLightIcon.style.display = isDark ? 'inline-block' : 'none';
 		}
 
-		updateIcons();
-
-		themeToggleBtn.addEventListener('click', function () {
-			const currentTheme = document.documentElement.getAttribute('data-theme');
-			const newTheme = currentTheme === 'business' ? 'light' : 'business';
-			
-			document.documentElement.setAttribute('data-theme', newTheme);
-			localStorage.setItem('theme', newTheme);
+		if (themeToggleBtn) {
 			updateIcons();
-		});
+
+			themeToggleBtn.addEventListener('click', function () {
+				const currentTheme = document.documentElement.getAttribute('data-theme');
+				const newTheme = currentTheme === 'business' ? 'light' : 'business';
+
+				document.documentElement.setAttribute('data-theme', newTheme);
+				localStorage.setItem('theme', newTheme);
+				updateIcons();
+			});
+		}
 	</script>
 </body>
+
 </html>
