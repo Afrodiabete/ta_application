@@ -363,6 +363,7 @@ class Student(models.Model):
     teachingExperienceBool = models.CharField(max_length=45, db_column='teachingexperiencebool')
     teachingExperienceText = models.CharField(max_length=250, db_column='teachingexperiencetext')
     campus = models.CharField(max_length=5, choices=Campus.choices)
+    year = models.CharField(max_length=15, blank=True, null=True)
 
     class Meta:
         db_table = 'student'
@@ -411,6 +412,7 @@ class CourseStudentYearKnowledge(models.Model):
         NO = 'No', 'No'
 
     class Recommendation(models.TextChoices):
+        STRONGLY_RECOMMEND_PREV = 'Strongly recommend previous TA', 'Strongly recommend previous TA'
         STRONGLY_RECOMMEND = 'Strongly Recommend', 'Strongly Recommend'
         RECOMMEND = 'Recommend', 'Recommend'
         NEUTRAL = 'Neutral', 'Neutral'
@@ -424,7 +426,7 @@ class CourseStudentYearKnowledge(models.Model):
     courseTaken = models.CharField(max_length=3, choices=CourseTaken.choices, db_column='coursetaken')
     knowledgeLevel = models.IntegerField(choices=KnowledgeLevel.choices, db_column='knowledgelevel')
     courseKnowledge = models.TextField(blank=True, default='', db_column='courseknowledge')
-    overallRecommendation = models.CharField(max_length=20, choices=Recommendation.choices, blank=True, null=True, db_column='overallrecommendation')
+    overallRecommendation = models.CharField(max_length=50, choices=Recommendation.choices, blank=True, null=True, db_column='overallrecommendation')
     comments = models.CharField(max_length=250, blank=True, null=True, db_column='comments')
 
 

@@ -123,7 +123,8 @@ const AdminController = {
 
         const filtered = all.filter(a => {
             let key = 'NR';
-            if (a.overall === "Strongly Recommend") key = 'SR';
+            if (a.overall === "Previous TA") key = 'PTA';
+            else if (a.overall === "Strongly Recommend") key = 'SR';
             else if (a.overall === "Recommend") key = 'R';
             else if (a.overall === "Neutral") key = 'N';
             else if (a.overall === "Do Not Recommend") key = 'NR';
@@ -176,7 +177,7 @@ const AdminController = {
                         </div>
                     </div>
                     ${a.resumeUrl
-                        ? `<div class="border rounded-xl bg-gray-50 overflow-hidden">
+                    ? `<div class="border rounded-xl bg-gray-50 overflow-hidden">
                                 <div class="p-3 bg-blue-100 border-b border-blue-200 flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -188,8 +189,8 @@ const AdminController = {
                                 </div>
                                 <iframe src="/download_resume/${a.email}/" class="w-full" style="height:600px;border:none;"></iframe>
                            </div>`
-                        : `<div class="p-4 border rounded-xl bg-gray-50 text-center text-sm text-gray-500 italic">No resume available</div>`
-                    }
+                    : `<div class="p-4 border rounded-xl bg-gray-50 text-center text-sm text-gray-500 italic">No resume available</div>`
+                }
                 </td>
             </tr>`;
 
@@ -205,6 +206,7 @@ const AdminController = {
 
                 <div class="flex gap-4 mb-4 text-sm p-2 bg-gray-50 rounded text-black">
                     <span class="font-semibold">Filter:</span>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="checkbox checkbox-xs" value="PTA" ${this.state.evaluatedFilters.PTA ? 'checked' : ''}> Previous TA</label>
                     <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="checkbox checkbox-xs" value="SR" ${this.state.evaluatedFilters.SR ? 'checked' : ''}> Strongly Rec</label>
                     <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="checkbox checkbox-xs" value="R" ${this.state.evaluatedFilters.R ? 'checked' : ''}> Recommend</label>
                     <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="checkbox checkbox-xs" value="N" ${this.state.evaluatedFilters.N ? 'checked' : ''}> Neutral</label>
@@ -287,7 +289,7 @@ const AdminController = {
                         </div>
                     </div>
                     ${a.resumeUrl
-                        ? `<div class="border rounded-xl bg-gray-50 overflow-hidden">
+                    ? `<div class="border rounded-xl bg-gray-50 overflow-hidden">
                                 <div class="p-3 bg-blue-100 border-b border-blue-200 flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -299,8 +301,8 @@ const AdminController = {
                                 </div>
                                 <iframe src="/download_resume/${a.email}/" class="w-full" style="height:600px;border:none;"></iframe>
                            </div>`
-                        : `<div class="p-4 border rounded-xl bg-gray-50 text-center text-sm text-gray-500 italic">No resume available</div>`
-                    }
+                    : `<div class="p-4 border rounded-xl bg-gray-50 text-center text-sm text-gray-500 italic">No resume available</div>`
+                }
                 </td>
             </tr>`;
 

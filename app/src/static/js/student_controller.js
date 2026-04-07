@@ -10,7 +10,7 @@ const StudentController = {
             email: CURRENT_STUDENT.email || '',
             department: CURRENT_STUDENT.department || '',
             degree: CURRENT_STUDENT.degree || '',
-            resume: '',
+            resume: CURRENT_STUDENT.hasResume ? 'Existing Resume' : '',
             resumeFile: null,
             teachingExperienceBool: CURRENT_STUDENT.teachingExperienceBool || 'No',
             teachingExperienceText: CURRENT_STUDENT.teachingExperienceText || '',
@@ -18,6 +18,7 @@ const StudentController = {
             courseID: '',
             studentID: '',
             year: '',
+            enrollmentTerm: CURRENT_STUDENT.enrollmentTerm || '',
             catD: '',
             level: '',
             courseTaken: '',
@@ -53,7 +54,7 @@ const StudentController = {
             }
 
             skills.forEach(skill => {
-                const val = this.state.data.skills[skill.id] || '';
+                const val = String(this.state.data.skills[skill.id] || '');
                 const div = document.createElement('div');
                 div.className = "form-control w-full";
                 div.innerHTML = `
@@ -84,15 +85,15 @@ const StudentController = {
             content = `
                 <div class="prose max-w-none text-sm text-gray-700 space-y-4">
                     <p>
-                      If you want to apply for a Teaching Assistant (TA) position at Purdue Polytechnic
-                      Institute in the 2026 Spring/Fall semester and are a Purdue graduate student, please
-                      complete this application.
+                      Please complete the application below to be considered for a Teaching Assistantship in the School of Applied and Creative Computing.  
+                    </p>
+                    <p>
+                      Please certify that you:
                     </p>
                     <ul class="list-disc ml-5 space-y-1">
-                      <li>TA positions are 20 hours/week with tuition support and stipend.</li>
+                      <li>A graduate student at Purdue University</li>
                       <li>
-                        English proficiency required (e.g., TOEFL iBT Speaking ≥ 18(or new TOEFL 3.5), IELTS Speaking ≥ 8.0, or
-                        TA a course and at same time taking the OEPT course).
+                        Have met English Proficiency Scores either by scoring 45 or above in the Purdue OEPT test, or achieved the following scores: IELTS Speaking >=8.0 or TOEFL iBT Speaking ≥ 18 (or new TOEFL 3.5)
                       </li>
                     </ul>
                     <div class="mt-6">
@@ -133,6 +134,14 @@ const StudentController = {
                         <select class="select select-bordered w-full" id="std-semester">
                             <option value="2026-SP" ${this.state.data.semester === '2026-SP' ? 'selected' : ''}>Spring 2026</option>
                             <option value="2026-FA" ${this.state.data.semester === '2026-FA' ? 'selected' : ''}>Fall 2026</option>
+                            <option value="2027-SP" ${this.state.data.semester === '2027-SP' ? 'selected' : ''}>Spring 2027</option>
+                            <option value="2027-FA" ${this.state.data.semester === '2027-FA' ? 'selected' : ''}>Fall 2027</option>
+                            <option value="2028-SP" ${this.state.data.semester === '2028-SP' ? 'selected' : ''}>Spring 2028</option>
+                            <option value="2028-FA" ${this.state.data.semester === '2028-FA' ? 'selected' : ''}>Fall 2028</option>
+                            <option value="2029-SP" ${this.state.data.semester === '2029-SP' ? 'selected' : ''}>Spring 2029</option>
+                            <option value="2029-FA" ${this.state.data.semester === '2029-FA' ? 'selected' : ''}>Fall 2029</option>
+                            <option value="2030-SP" ${this.state.data.semester === '2030-SP' ? 'selected' : ''}>Spring 2030</option>
+                            <option value="2030-FA" ${this.state.data.semester === '2030-FA' ? 'selected' : ''}>Fall 2030</option>
                         </select>
                     </div>
                 </div>
@@ -185,8 +194,17 @@ const StudentController = {
                             <span class="label-text font-semibold">Enrollment term <span class="text-error">*</span></span>
                         </label>
                         <select class="select select-bordered w-full" id="std-enrollment">
-                            <option value="2026-SP">Spring 2026</option>
-                            <option value="2026-FA">Fall 2026</option>
+                            <option value="Early" ${this.state.data.enrollmentTerm === 'Early' ? 'selected' : ''}>Early</option>
+                            <option value="2022-SP" ${this.state.data.enrollmentTerm === '2022-SP' ? 'selected' : ''}>Spring 2022</option>
+                            <option value="2022-FA" ${this.state.data.enrollmentTerm === '2022-FA' ? 'selected' : ''}>Fall 2022</option>
+                            <option value="2023-SP" ${this.state.data.enrollmentTerm === '2023-SP' ? 'selected' : ''}>Spring 2023</option>
+                            <option value="2023-FA" ${this.state.data.enrollmentTerm === '2023-FA' ? 'selected' : ''}>Fall 2023</option>
+                            <option value="2024-SP" ${this.state.data.enrollmentTerm === '2024-SP' ? 'selected' : ''}>Spring 2024</option>
+                            <option value="2024-FA" ${this.state.data.enrollmentTerm === '2024-FA' ? 'selected' : ''}>Fall 2024</option>
+                            <option value="2025-SP" ${this.state.data.enrollmentTerm === '2025-SP' ? 'selected' : ''}>Spring 2025</option>
+                            <option value="2025-FA" ${this.state.data.enrollmentTerm === '2025-FA' ? 'selected' : ''}>Fall 2025</option>
+                            <option value="2026-SP" ${this.state.data.enrollmentTerm === '2026-SP' ? 'selected' : ''}>Spring 2026</option>
+                            <option value="2026-FA" ${this.state.data.enrollmentTerm === '2026-FA' ? 'selected' : ''}>Fall 2026</option>
                         </select>
                     </div>
 
@@ -204,11 +222,13 @@ const StudentController = {
                     <!-- Resume Upload -->
                     <div class="form-control w-full">
                         <label class="label">
-                            <span class="label-text font-semibold">Upload resume (PDF) <span class="text-error">*</span></span>
+                            <span class="label-text font-semibold">Upload resume (PDF) ${CURRENT_STUDENT.hasResume ? '' : '<span class="text-error">*</span>'}</span>
                         </label>
                         <input type="file" id="std-resume" class="file-input file-input-bordered w-full" accept=".pdf" />
                         <label class="label">
-                            <span class="label-text-alt text-error">PDF required.</span>
+                            <span class="label-text-alt ${CURRENT_STUDENT.hasResume ? 'text-gray-500' : 'text-error'}">
+                                ${CURRENT_STUDENT.hasResume ? 'Resume already on file. Uploading a new PDF will replace it.' : 'PDF required.'}
+                            </span>
                         </label>
                     </div>
                 </div>
@@ -253,11 +273,18 @@ const StudentController = {
                             <select id="std-course" class="select select-bordered w-full">
                                 <option disabled selected>Pick a course</option>
                                 ${COURSES.map(c => {
-                const applied = APPLIED_COURSES.includes(c.id) ? ' (applied)' : '';
+                const applied = APPLIED_COURSES.includes(c.id) ? ' (applied✅)' : '';
                 return `<option value="${c.id}">${c.id} - ${c.title}${applied}</option>`;
             }).join('')}
                             </select>
                         </div>
+                    </div>
+                    
+                    <div id="std-course-desc">
+                        ${this.state.data.courseID && this.state.data.courseID !== "Pick a course" ? (() => {
+                            const c = COURSES.find(x => x.id === this.state.data.courseID);
+                            return c && c.description ? `<label class="label"><span class="label-text font-semibold text-gray-700">Course Description</span></label><div class="text-sm text-gray-600 bg-gray-100 p-3 rounded-lg border border-gray-200 mt-1 mb-4">${c.description}</div>` : '';
+                        })() : ''}
                     </div>
 
                     <!-- Taken Before -->
@@ -310,11 +337,28 @@ const StudentController = {
                     courseSel.addEventListener('change', (e) => {
                         const courseId = e.target.value;
                         this.state.data.courseID = courseId;
+                        
+                        const descEl = document.getElementById('std-course-desc');
+                        if (descEl) {
+                            const course = COURSES.find(c => c.id === courseId);
+                            if (course && course.description) {
+                                descEl.innerHTML = `<label class="label"><span class="label-text font-semibold text-gray-700">Course Description</span></label><div class="text-sm text-gray-600 bg-gray-100 p-3 rounded-lg border border-gray-200 mt-1 mb-4">${course.description}</div>`;
+                            } else {
+                                descEl.innerHTML = '';
+                            }
+                        }
 
                         if (PREVIOUS_APPLICATIONS[courseId]) {
                             this.state.data.skills = { ...PREVIOUS_APPLICATIONS[courseId].skills };
+                            this.state.data.courseKnowledge = PREVIOUS_APPLICATIONS[courseId].courseKnowledge || '';
                         } else {
                             this.state.data.skills = {};
+                            this.state.data.courseKnowledge = '';
+                        }
+
+                        const bgEl = document.getElementById('std-bg');
+                        if (bgEl) {
+                            bgEl.value = this.state.data.courseKnowledge;
                         }
 
                         renderSkills(courseId);
@@ -405,17 +449,20 @@ const StudentController = {
                 if (degreeEl) d.degree = degreeEl.value;
                 if (progEl) d.department = progEl.value;
                 if (campEl) d.campus = campEl.value;
-                if (enrollEl) d.year = enrollEl.value;
+                if (enrollEl) d.enrollmentTerm = enrollEl.value;
                 if (expEl) d.teachingExperienceBool = expEl.value;
                 if (descEl) d.teachingExperienceText = descEl.value;
                 if (fileEl && fileEl.files.length > 0) {
                     d.resume = fileEl.files[0].name;
                     d.resumeFile = fileEl.files[0];
+                } else if (CURRENT_STUDENT.hasResume) {
+                    d.resume = 'Existing Resume';
+                    d.resumeFile = null;
                 }
 
                 const dValid = d.degree && d.degree !== "Select Degree";
                 const pValid = d.department && d.department !== "Select Program";
-                const fValid = d.resume && d.resume.length > 0;
+                const fValid = Boolean(d.resume);
                 isValid = dValid && pValid && fValid;
             } else if (step === 3) {
                 const appCampEl = document.getElementById('std-app-campus');
@@ -503,15 +550,59 @@ const StudentController = {
                     });
 
                     if (response.ok) {
-                        alert("Application Submitted Successfully!");
-                        this.state.step = 0;
-                        this.state.data = {
-                            email: '', firstName: '', lastName: '', department: '',
-                            degree: '', resume: '', teachingExperienceBool: '', teachingExperienceText: '',
-                            campus: '', courseID: '', studentID: '', year: '',
-                            catD: '', level: '', courseTaken: '', knowledgeLevel: '', courseKnowledge: '',
-                            skills: {}
+                        try {
+                            if (typeof APPLIED_COURSES !== 'undefined' && this.state.data.courseID) {
+                                if (!APPLIED_COURSES.includes(this.state.data.courseID)) {
+                                    APPLIED_COURSES.push(this.state.data.courseID);
+                                }
+                            }
+                        } catch (e) { }
+
+                        const modalHtml = `
+                            <dialog class="modal modal-open bg-black bg-opacity-50">
+                              <div class="modal-box">
+                                <h3 class="font-bold text-lg text-success">Application Submitted Successfully!</h3>
+                                <p class="py-4">Do you want to continue applying for another course, or exit?</p>
+                                <div class="modal-action">
+                                    <button class="btn btn-ghost" id="btn-success-exit">Exit</button>
+                                    <button class="btn btn-primary" id="btn-success-continue">Continue Applying</button>
+                                </div>
+                              </div>
+                            </dialog>
+                        `;
+                        const modalDiv = document.createElement('div');
+                        modalDiv.innerHTML = modalHtml;
+                        document.body.appendChild(modalDiv);
+
+                        const cleanup = () => {
+                            if (document.body.contains(modalDiv)) document.body.removeChild(modalDiv);
                         };
+
+                        await new Promise((resolve) => {
+                            document.getElementById('btn-success-continue').onclick = () => {
+                                cleanup();
+                                // Stay on step 3, reset course-specific fields
+                                this.state.data.courseID = '';
+                                this.state.data.courseTaken = '';
+                                this.state.data.courseKnowledge = '';
+                                this.state.data.skills = {};
+                                resolve();
+                            };
+
+                            document.getElementById('btn-success-exit').onclick = () => {
+                                cleanup();
+                                // Exit to step 0, reset all fields
+                                this.state.step = 0;
+                                this.state.data = {
+                                    email: '', firstName: '', lastName: '', department: '',
+                                    degree: '', resume: '', teachingExperienceBool: '', teachingExperienceText: '',
+                                    campus: '', courseID: '', studentID: '', year: '',
+                                    catD: '', level: '', courseTaken: '', knowledgeLevel: '', courseKnowledge: '',
+                                    skills: {}
+                                };
+                                resolve();
+                            };
+                        });
                     } else {
                         const errText = await response.text();
                         alert("Submission failed: " + errText);

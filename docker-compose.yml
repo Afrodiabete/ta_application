@@ -1,8 +1,10 @@
 services:
   db:
     image: mariadb:10.11
-    container_name: peereval-db
+    container_name: ta_application-db
     restart: always
+    env_file:
+      - .env
     volumes:
       - ./mariadb_data:/var/lib/mysql
     environment:
@@ -21,17 +23,19 @@ services:
 
   web:
     build: ./app
-    container_name: peereval-web
+    container_name: ta_application-web
     command: ["sh", "./entrypoint.sh"] 
+    env_file:
+      - .env
     ports:
       - "80:5000"
     volumes:
       - ./app:/app
     environment:
       - DB_TYPE=mariadb
-      - DB_NAME=${POSTGRES_DB}
-      - DB_USER=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=db
       - DB_PORT=3306
       - VM_IP=${VM_IP:-}

@@ -127,6 +127,7 @@ const FacultyController = {
                         <div>
                             <label class="block text-sm font-medium mb-1">Overall Recommendation</label>
                             <select class="select select-bordered w-full" id="eval-rec">
+                                <option>Strongly recommend previous TA</option>
                                 <option>Strongly Recommend</option>
                                 <option>Recommend</option>
                                 <option>Neutral</option>

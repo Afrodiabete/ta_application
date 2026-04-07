@@ -283,6 +283,8 @@ def frontend_app(request, path=''):
                 'campus': student.campus,
                 'teachingExperienceBool': student.teachingExperienceBool,
                 'teachingExperienceText': student.teachingExperienceText,
+                'hasResume': bool(student.resume),
+                'enrollmentTerm': student.year,
             }
             
             # Get list of course IDs the student has applied to
@@ -303,6 +305,7 @@ def frontend_app(request, path=''):
                     first_entry = csyk_entries.first()
                     previous_applications[course_id] = {
                         'year': first_entry.year,
+                        'courseKnowledge': first_entry.courseKnowledge,
                         'skills': {}
                     }
                     
@@ -359,18 +362,22 @@ def submit_application(request):
         if not email:
             return HttpResponse("Email is required", status=400)
             
+        defaults_dict = {
+            'firstName': data.get('firstName', ''),
+            'lastName': data.get('lastName', ''),
+            'department': data.get('department', ''),
+            'degree': data.get('degree', 'MS'), # Default to MS if missing
+            'teachingExperienceBool': data.get('teachingExperienceBool', 'No'),
+            'teachingExperienceText': data.get('teachingExperienceText', ''),
+            'campus': data.get('campus', 'WL'), # Default West Lafayette
+            'year': data.get('enrollmentTerm'),
+        }
+        if 'resume' in files:
+            defaults_dict['resume'] = files['resume'].read()
+
         student, created = Student.objects.update_or_create(
             email=email,
-            defaults={
-                'firstName': data.get('firstName', ''),
-                'lastName': data.get('lastName', ''),
-                'department': data.get('department', ''),
-                'degree': data.get('degree', 'MS'), # Default to MS if missing
-                'resume': files['resume'].read() if 'resume' in files else b'',
-                'teachingExperienceBool': data.get('teachingExperienceBool', 'No'),
-                'teachingExperienceText': data.get('teachingExperienceText', ''),
-                'campus': data.get('campus', 'WL'), # Default West Lafayette
-            }
+            defaults=defaults_dict
         )
         
         # 2. Handle CourseStudentYearKnowledge
