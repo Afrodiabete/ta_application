@@ -6,6 +6,7 @@ const FacultyController = {
         page: 'courses', // courses | applicants | detail
         courseId: COURSES.length > 0 ? COURSES[0].id : null,
         applicantId: null,
+        applicantYear: null,  // tracks which semester's row was clicked
         filter: 'all',
         evalData: { overall: 'Recommend', comments: '' }
     },
@@ -36,25 +37,31 @@ const FacultyController = {
     },
 
     renderApplicants(container) {
-        const apps = APPLICANTS.filter(a => a.applications[this.state.courseId]);
-        const rows = apps.map(a => {
-            const status = a.applications[this.state.courseId].status;
-            const statusBadge = status === 'evaluated'
-                ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs">Evaluated</span>`
-                : `<span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs">New</span>`;
-
-            return `
-            <tr class="odd:bg-white even:bg-gray-50/50">
-                <td class="p-3">${a.name}<br><span class="text-black text-xs">${a.email}</span></td>
-                <td class="p-3">${a.dept} / ${a.degree}</td>
-                <td class="p-3 text-xs">${a.hasTeachingExp === 'Yes' ? '<span class="px-2 py-1 rounded bg-green-100 text-green-800">Yes</span>' : '<span class="px-2 py-1 rounded bg-gray-100 text-gray-600">No</span>'}</td>
-                <td class="p-3">${a.term}</td>
-                <td class="p-3">${statusBadge}</td>
-                <td class="p-3">
-                    <button class="btn btn-xs btn-outline btn-review" data-id="${a.id}">Review</button>
-                </td>
-            </tr>`;
-        }).join('');
+        // Build one row per (applicant, semester) pair for this course.
+        // Applications are keyed as "courseId__year", so iterate all keys.
+        const rows = [];
+        for (const a of APPLICANTS) {
+            const matchingKeys = Object.keys(a.applications || {}).filter(key =>
+                a.applications[key].courseId === this.state.courseId
+            );
+            for (const key of matchingKeys) {
+                const rec = a.applications[key];
+                const statusBadge = rec.status === 'evaluated'
+                    ? `<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs">Evaluated</span>`
+                    : `<span class="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs">New</span>`;
+                rows.push(`
+                <tr class="odd:bg-white even:bg-gray-50/50">
+                    <td class="p-3">${a.name}<br><span class="text-black text-xs">${a.email}</span></td>
+                    <td class="p-3">${a.dept} / ${a.degree}</td>
+                    <td class="p-3 text-xs">${a.hasTeachingExp === 'Yes' ? '<span class="px-2 py-1 rounded bg-green-100 text-green-800">Yes</span>' : '<span class="px-2 py-1 rounded bg-gray-100 text-gray-600">No</span>'}</td>
+                    <td class="p-3">${rec.year}</td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3">
+                        <button class="btn btn-xs btn-outline btn-review" data-id="${a.id}" data-year="${rec.year}">Review</button>
+                    </td>
+                </tr>`);
+            }
+        }
 
         container.innerHTML = `
             <section class="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
@@ -64,19 +71,30 @@ const FacultyController = {
                 </header>
                 <table class="w-full text-sm text-left">
                     <thead><tr class="bg-gray-100"><th class="p-3">Applicant</th><th class="p-3">Dept/Degree</th><th class="p-3">Teaching Exp</th><th class="p-3">Term</th><th class="p-3">Status</th><th class="p-3">Actions</th></tr></thead>
-                    <tbody>${rows || '<tr><td colspan="5" class="p-4 text-center">No applicants found.</td></tr>'}</tbody>
+                    <tbody>${rows.join('') || '<tr><td colspan="6" class="p-4 text-center">No applicants found.</td></tr>'}</tbody>
                 </table>
             </section>
         `;
         document.getElementById('btn-fac-back').onclick = () => { this.state.page = 'courses'; App.render(); };
         container.querySelectorAll('.btn-review').forEach(b => {
-            b.onclick = (e) => { this.state.applicantId = e.target.dataset.id; this.state.page = 'detail'; App.render(); };
+            b.onclick = (e) => {
+                this.state.applicantId = e.target.dataset.id;
+                this.state.applicantYear = e.target.dataset.year;
+                this.state.page = 'detail';
+                App.render();
+            };
         });
     },
 
     renderDetail(container) {
         const a = APPLICANTS.find(x => x.id === this.state.applicantId);
         if (!a) { this.state.page = 'applicants'; App.render(); return; }
+
+        // Find the application record for this specific course + year
+        const appKey = `${this.state.courseId}__${this.state.applicantYear}`;
+        const appRec = (a.applications || {})[appKey] || {};
+        const courseSkills = appRec.skills || [];
+        const courseKnowledgeText = appRec.knowledge || '';
 
         container.innerHTML = `
             <section class="bg-white rounded-2xl shadow-sm p-6 border border-gray-200 space-y-6">
@@ -93,14 +111,17 @@ const FacultyController = {
                         <h3 class="font-semibold mb-2">Academic Info</h3>
                         <ul class="text-sm space-y-1">
                             <li><strong>Campus:</strong> West Lafayette</li>
-                            <li><strong>Enrollment:</strong> ${a.term}</li>
+                            <li><strong>Term:</strong> ${this.state.applicantYear || a.term}</li>
                             <li><strong>Teaching Exp:</strong> ${a.hasTeachingExp} (${a.teachingKnowledge})</li>
+                            ${courseKnowledgeText ? `<li><strong>Course Knowledge:</strong> ${courseKnowledgeText}</li>` : ''}
                         </ul>
                     </div>
                     <div>
-                        <h3 class="font-semibold mb-2">Skills</h3>
+                        <h3 class="font-semibold mb-2">Skills for ${this.state.courseId}</h3>
                         <ul class="text-sm list-disc pl-5">
-                            ${a.subjectTopics.map(s => `<li>${s.name} (Level ${s.level})</li>`).join('')}
+                            ${courseSkills.length > 0
+                                ? courseSkills.map(s => `<li>${s.name} (Level ${s.level})</li>`).join('')
+                                : '<li class="text-gray-400">No skill ratings recorded.</li>'}
                         </ul>
                     </div>
                 </div>
@@ -157,7 +178,7 @@ const FacultyController = {
                 const formData = new FormData();
                 formData.append('applicant_id', a.email);
                 formData.append('course_id', this.state.courseId);
-                formData.append('year', a.term || '2026');
+                formData.append('year', this.state.applicantYear || a.term || '2026');
                 formData.append('overall_recommendation', rec);
                 formData.append('comments', comment);
 
@@ -185,10 +206,12 @@ const FacultyController = {
 
                 if (response.ok) {
                     alert("Evaluation Submitted Successfully!");
-                    if (a.applications[this.state.courseId]) {
-                        a.applications[this.state.courseId].status = 'evaluated';
-                        a.applications[this.state.courseId].overall = rec;
-                        a.applications[this.state.courseId].comments = comment;
+                    // Update local state using the composite key
+                    const updKey = `${this.state.courseId}__${this.state.applicantYear}`;
+                    if (a.applications[updKey]) {
+                        a.applications[updKey].status = 'evaluated';
+                        a.applications[updKey].overall = rec;
+                        a.applications[updKey].comments = comment;
                     }
                     this.state.page = 'applicants';
                     App.render();

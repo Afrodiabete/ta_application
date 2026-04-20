@@ -175,12 +175,32 @@ def frontend_app(request, path=''):
     """Serve the Dashboard (replaces React app)."""
     from src.models import (
         Course, CourseMustKnow, KnowledgeCategory, 
-        Student, CourseStudentYearKnowledge
+        Student, CourseStudentYearKnowledge, CourseInstructorYear
     )
     import json
-    
-    # Fetch courses from DB
-    courses_qs = Course.objects.all().values('idcourse', 'title', 'description')
+
+    # ── Determine Role first so we can filter data accordingly ──────────────
+    user_role = 'student'
+    if request.user.is_superuser:
+        user_role = 'admin'
+    elif request.user.is_staff:
+        user_role = 'faculty'
+
+    # ── Courses ──────────────────────────────────────────────────────────────
+    if user_role == 'faculty':
+        # Faculty only see courses they are assigned to teach (any year).
+        # CourseInstructorYear links Instructor (email PK) to Course.
+        faculty_course_ids = set(
+            CourseInstructorYear.objects.filter(
+                instructor__email=request.user.email
+            ).values_list('course__idcourse', flat=True)
+        )
+        courses_qs = Course.objects.filter(idcourse__in=faculty_course_ids).values('idcourse', 'title', 'description')
+    else:
+        # Admin and student see all courses
+        faculty_course_ids = None
+        courses_qs = Course.objects.all().values('idcourse', 'title', 'description')
+
     courses_list = [
         {
             'id': c['idcourse'], 
@@ -189,6 +209,7 @@ def frontend_app(request, path=''):
         } 
         for c in courses_qs
     ]
+
 
     # Fetch Course Skills
     skills_map = {}
@@ -242,36 +263,39 @@ def frontend_app(request, path=''):
             'level': item.knowledgeLevel
         })
         
-        # Mark as applied to this course
-        # Default status 'new' if not present
+        # Mark as applied to this course+year combination.
+        # Key is "courseId__year" so the same course applied in different
+        # semesters (e.g. 2026-SP and 2026-FA) are kept as separate entries.
         c_id = item.courseID.idcourse
-        if c_id not in app_data['applications']:
-            app_data['term'] = item.year # Update term if available
-            app_data['applications'][c_id] = {
+        app_key = f"{c_id}__{item.year}"
+        if app_key not in app_data['applications']:
+            app_data['applications'][app_key] = {
+                'courseId': c_id,
+                'year': item.year,
                 'status': 'evaluated' if item.overallRecommendation else 'new',
                 'overall': item.overallRecommendation or '',
                 'overallScore': None,
                 'specificScore': None,
                 'comments': item.comments or '',
                 'evaluatedAt': None,
-                'knowledge': item.courseKnowledge or ''
+                'knowledge': item.courseKnowledge or '',
+                'skills': []  # per-course skill ratings
             }
+        # Append this skill entry to the application record's skills list
+        app_data['applications'][app_key]['skills'].append({
+            'catId': item.catID.id,
+            'name': item.catID.categoryName,
+            'level': item.knowledgeLevel
+        })
             
     applicants_list = list(applicants_map.values())
-    
-    # Determine User Role
-    user_role = 'student'
-    current_student_data = {}
-    
-    if request.user.is_superuser:
-        user_role = 'admin'
-    elif request.user.is_staff: # or request.user.is_instructor if field exists
-        user_role = 'faculty'
-    
+
     # If student, try to fetch existing data
+    current_student_data = {}
     applied_course_ids = []
     previous_applications = {}
     if user_role == 'student':
+
         try:
             student = Student.objects.get(email=request.user.email)
             current_student_data = {

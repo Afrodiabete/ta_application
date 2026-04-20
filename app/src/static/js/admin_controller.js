@@ -17,36 +17,47 @@ const AdminController = {
 
     getApplicantsForCourse(courseId) {
         const list = [];
+        const filterYear = this.state.homeYear;
+        const filterTerm = this.state.homeTerm;
+
         for (const a of APPLICANTS) {
-            const rec = a.applications[courseId];
-            if (!rec) continue;
+            // Applications are keyed as "courseId__year" (e.g. "CGT 26505__2026-FA").
+            // Find all keys for this courseId that also match the year/term filter.
+            const matchingKeys = Object.keys(a.applications || {}).filter(key => {
+                const rec = a.applications[key];
+                if (rec.courseId !== courseId) return false;
 
-            const termStr = (a.term || "").toUpperCase();
-            const filterYear = this.state.homeYear;
-            const filterTerm = this.state.homeTerm;
+                const termStr = (rec.year || '').toUpperCase();
+                if (filterYear && !termStr.includes(filterYear)) return false;
 
-            if (filterYear && !termStr.includes(filterYear)) continue;
-
-            if (filterTerm) {
-                const isSpring = filterTerm === 'Spring' && (termStr.includes('SPRING') || termStr.includes('SP'));
-                const isFall = filterTerm === 'Fall' && (termStr.includes('FALL') || termStr.includes('FA'));
-                if (!isSpring && !isFall) continue;
-            }
-
-            list.push({
-                ...a,
-                course: courseId,
-                status: rec.status,
-                overall: rec.overall || null,
-                overallScore: rec.overallScore ?? null,
-                specificScore: rec.specificScore ?? null,
-                comments: rec.comments ?? "",
-                evaluatedAt: rec.evaluatedAt ?? null,
-                knowledge: rec.knowledge || ""
+                if (filterTerm) {
+                    const isSpring = filterTerm === 'Spring' && (termStr.includes('SPRING') || termStr.includes('-SP'));
+                    const isFall   = filterTerm === 'Fall'   && (termStr.includes('FALL')   || termStr.includes('-FA'));
+                    if (!isSpring && !isFall) return false;
+                }
+                return true;
             });
+
+            // Produce one row per matching semester entry.
+            for (const key of matchingKeys) {
+                const rec = a.applications[key];
+                list.push({
+                    ...a,
+                    course: courseId,
+                    term: rec.year,
+                    status: rec.status,
+                    overall: rec.overall || null,
+                    overallScore: rec.overallScore ?? null,
+                    specificScore: rec.specificScore ?? null,
+                    comments: rec.comments ?? '',
+                    evaluatedAt: rec.evaluatedAt ?? null,
+                    knowledge: rec.knowledge || ''
+                });
+            }
         }
         return list;
     },
+
 
     render(container) {
         if (this.state.page === 'home') this.renderHome(container);
@@ -137,11 +148,11 @@ const AdminController = {
             const isExpanded = this.state.evaluatedDetailId === a.email;
 
             const otherCourses = Object.entries(a.applications || {})
-                .filter(([cid]) => cid !== this.state.courseId)
-                .map(([cid, rec]) => {
+                .filter(([, rec]) => rec.courseId !== this.state.courseId)
+                .map(([, rec]) => {
                     const statusText = rec.status === 'evaluated' ? (rec.overall || 'Evaluated') : 'Pending';
                     const commentText = rec.comments ? `<br><span class="text-xs text-gray-600 block pl-2 border-l-2 border-gray-300 mt-1">${rec.comments}</span>` : '';
-                    return `<div class="mb-2"><strong>${cid}:</strong> ${statusText}${commentText}</div>`;
+                    return `<div class="mb-2"><strong>${rec.courseId} (${rec.year}):</strong> ${statusText}${commentText}</div>`;
                 })
                 .join('') || '<div class="text-gray-500">—</div>';
 
@@ -244,16 +255,17 @@ const AdminController = {
             const isExpanded = this.state.pendingDetailId === a.email;
 
             const otherCoursesDetail = Object.entries(a.applications || {})
-                .filter(([cid]) => cid !== this.state.courseId)
-                .map(([cid, rec]) => {
+                .filter(([, rec]) => rec.courseId !== this.state.courseId)
+                .map(([, rec]) => {
                     const statusText = rec.status === 'evaluated' ? (rec.overall || 'Evaluated') : 'Pending';
                     const commentText = rec.comments ? `<br><span class="text-xs text-gray-600 block pl-2 border-l-2 border-gray-300 mt-1">${rec.comments}</span>` : '';
-                    return `<div class="mb-2"><strong>${cid}:</strong> ${statusText}${commentText}</div>`;
+                    return `<div class="mb-2"><strong>${rec.courseId} (${rec.year}):</strong> ${statusText}${commentText}</div>`;
                 })
                 .join('') || '<div class="text-gray-500">—</div>';
 
-            const otherCoursesSimple = Object.keys(a.applications || {})
-                .filter(cid => cid !== this.state.courseId)
+            const otherCoursesSimple = Object.values(a.applications || {})
+                .filter(rec => rec.courseId !== this.state.courseId)
+                .map(rec => `${rec.courseId} (${rec.year})`)
                 .join(', ');
 
             const mainRow = `
